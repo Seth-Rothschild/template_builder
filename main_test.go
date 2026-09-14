@@ -92,6 +92,21 @@ func TestPandocConvertMarkdownToLatex(t *testing.T) {
 		}
 	})
 }
+func TestParseTemplateVersion(t *testing.T) {
+	t.Run("returns template version from metadata", func(t *testing.T) {
+		path := "testdata/slick-template.md"
+		actual, err := parseTemplateVersion(path)
+		assertNoError(t, err)
+		assertEqual(t, "slick", actual)
+	})
+
+	t.Run("returns empty when no metadata", func(t *testing.T) {
+		path := "testdata/nometadata.md"
+		actual, err := parseTemplateVersion(path)
+		assertNoError(t, err)
+		assertEqual(t, "", actual)
+	})
+}
 
 // func TestPreambleDeclaresRequiredPackages(t *testing.T) {
 // 	expected := "\\usepackage{graphicx}\n" +

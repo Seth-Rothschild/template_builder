@@ -5,11 +5,10 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	// "bytes"
 	// "fmt"
 	// "io"
-	// "path/filepath"
-	// "strings"
 )
 
 func port() string {
@@ -39,6 +38,26 @@ func pandocConvertMarkdownToLatex(path string, template string) (string, error) 
 		return "", err
 	}
 	return string(output), nil
+}
+
+func parseTemplateVersion(path string) (string, error) {
+	content, err := os.ReadFile(path)
+	if err != nil {
+		return "", err
+	}
+
+	lines := strings.Split(string(content), "\n")
+	firstLine := lines[0]
+	secondLine := lines[1]
+	if firstLine != "---" {
+		return "", nil
+	}
+
+	key, value, _ := strings.Cut(secondLine, ":")
+	if strings.TrimSpace(key) != "template_version" {
+		return "", nil
+	}
+	return strings.TrimSpace(value), nil
 }
 
 // func convertMarkdown(path string) (string, error) {
@@ -199,7 +218,6 @@ func pandocConvertMarkdownToLatex(path string, template string) (string, error) 
 // 	w.Header().Set("Content-Type", "application/pdf")
 // 	w.Write(pdfBytes)
 // }
-
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
