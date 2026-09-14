@@ -1,0 +1,62 @@
+\documentclass[11pt]{article}
+
+\usepackage[top=1in, bottom=1in, left=1.5in, right=1.5in]{geometry}
+\usepackage{fontspec}
+\setmainfont{Lato-Regular.ttf}[
+  BoldFont = Lato-Bold.ttf,
+  ItalicFont = Lato-Italic.ttf,
+  BoldItalicFont = Lato-BoldItalic.ttf,
+]
+\usepackage{parskip}
+\usepackage{setspace}
+\setstretch{1.15}
+$header-includes$
+
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+
+\providecolor{textgray}{HTML}{333333}
+
+\setcounter{secnumdepth}{0}
+
+\titleformat{\section}{\color{accent}\Large\bfseries}{}{0em}{}[{\color{accent}\titlerule[1pt]}]
+\titleformat{\subsection}{\color{accent}\large\bfseries}{}{0em}{}
+\titlespacing*{\section}{0pt}{1.5em}{0.8em}
+
+\pagestyle{fancy}
+\fancyhf{}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0pt}
+\fancyhead[L]{\small\color{accent}$if(title)$$title$$endif$}
+\fancyfoot[R]{\small\color{textgray}\thepage}
+
+\hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent}
+
+\color{textgray}
+
+\begin{document}
+
+$if(title)$
+\begin{titlepage}
+\centering
+\vspace*{4cm}
+{\color{accent}\rule{\linewidth}{2pt}}\\[0.5cm]
+{\Huge\bfseries\color{accent} $title$}\\[0.3cm]
+$if(subtitle)$
+{\Large\color{textgray} $subtitle$}\\[0.3cm]
+$endif$
+{\color{accent}\rule{\linewidth}{2pt}}\\[2cm]
+$if(author)$
+{\Large $author$}\\[0.5cm]
+$endif$
+$if(date)$
+{\large\color{textgray} $date$}
+$endif$
+\end{titlepage}
+\tableofcontents
+\newpage
+$endif$
+
+$body$
+\end{document}
