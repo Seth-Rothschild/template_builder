@@ -18,7 +18,9 @@ func TestPreambleDeclaresRequiredPackages(t *testing.T) {
 		"\\providecommand{\\tightlist}{%\n" +
 		"  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}\n" +
 		"\\providecommand{\\pandocbounded}[1]{#1}\n" +
-		"\\providecolor{accent}{HTML}{2C6E91}\n"
+		"\\providecolor{accent}{HTML}{2C6E91}\n" +
+		"\\usepackage{xeCJK}\n" +
+		"\\setCJKmainfont{FandolHei-Regular.otf}\n"
 	actual := preamble()
 
 	assertEqual(t, expected, actual)
@@ -227,6 +229,34 @@ func TestBuildPDFSlickTemplateDoesNotFallBackFonts(t *testing.T) {
 
 	if strings.Contains(string(logBytes), "Font Warning") {
 		t.Errorf("expected no font fallback warnings, got log:\n%s", logBytes)
+	}
+}
+
+func TestBuildPDFFailsWhenCharactersAreMissingFromFont(t *testing.T) {
+	mdPath := "testdata/unsupported-glyph.md"
+	outDir := t.TempDir()
+
+	_, err := buildPDF(mdPath, outDir, "")
+
+	if err == nil {
+		t.Fatalf("expected an error for missing characters, got nil")
+	}
+	if !strings.Contains(err.Error(), "missing character") {
+		t.Errorf("expected error to mention missing characters, got %v", err)
+	}
+}
+
+func TestBuildPDFRendersCJKCharacters(t *testing.T) {
+	mdPath := "testdata/unicode.md"
+	outDir := t.TempDir()
+
+	pdfPath, err := buildPDF(mdPath, outDir, "")
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+	if _, statErr := os.Stat(pdfPath); statErr != nil {
+		t.Errorf("expected pdf file to exist at %q, got %v", pdfPath, statErr)
 	}
 }
 

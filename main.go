@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"io"
 	"log"
@@ -52,7 +53,9 @@ func preamble() string {
 		"\\providecommand{\\tightlist}{%\n" +
 		"  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}\n" +
 		"\\providecommand{\\pandocbounded}[1]{#1}\n" +
-		"\\providecolor{accent}{HTML}{2C6E91}\n"
+		"\\providecolor{accent}{HTML}{2C6E91}\n" +
+		"\\usepackage{xeCJK}\n" +
+		"\\setCJKmainfont{FandolHei-Regular.otf}\n"
 }
 
 func buildPDF(mdPath string, outDir string, templatePath string) (string, error) {
@@ -89,6 +92,9 @@ func buildPDF(mdPath string, outDir string, templatePath string) (string, error)
 	}
 	if err != nil {
 		return "", fmt.Errorf("tectonic failed: %w: %s", err, output)
+	}
+	if bytes.Contains(output, []byte("Missing character")) {
+		return "", fmt.Errorf("build produced missing character warnings: %s", output)
 	}
 
 	return filepath.Join(outDir, "output.pdf"), nil
