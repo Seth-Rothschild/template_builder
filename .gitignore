@@ -1,2 +1,3 @@
 bin
 e2e-output.pdf
+*.log

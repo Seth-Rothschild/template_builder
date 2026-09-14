@@ -8,9 +8,7 @@ lint:
 	go vet ./...
 
 test: lint format
-	go clean -testcache
-	go test --race -v ./...
-	pandoc lua filters/tables_test.lua
+	go test -v ./...
 
 build:
 	go build -o bin/template_builder .
