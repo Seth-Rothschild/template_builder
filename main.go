@@ -1,7 +1,6 @@
 package main
 
 import (
-	"io"
 	"log"
 	"net/http"
 	"os"
@@ -22,7 +21,7 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func buildHandler(w http.ResponseWriter, r *http.Request) {
-	markdown, err := io.ReadAll(r.Body)
+	markdown, err := readMarkdown(r)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
@@ -34,6 +33,11 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer os.RemoveAll(tempDir)
+
+	if err := writeImages(r, tempDir); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
 	mdPath := filepath.Join(tempDir, "input.md")
 	if err := os.WriteFile(mdPath, markdown, 0644); err != nil {

@@ -11,6 +11,7 @@ import (
 func preamble() string {
 	lines := []string{}
 	lines = append(lines, "\\usepackage{graphicx}")
+	lines = append(lines, "\\usepackage{float}")
 	lines = append(lines, "\\usepackage{tabularray}")
 	lines = append(lines, "\\usepackage{xcolor}")
 	lines = append(lines, "\\providecommand{\\tightlist}{%\n  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}")
@@ -60,6 +61,7 @@ func runPandoc(path string) (string, error) {
 	args = append(args, "-t", "latex")
 	args = append(args, "--template", template)
 	args = append(args, "--lua-filter", "filters/tables.lua")
+	args = append(args, "--lua-filter", "filters/images.lua")
 	args = append(args, "-V", "header-includes="+preamble())
 	args = append(args, path)
 

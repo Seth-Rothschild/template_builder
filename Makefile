@@ -8,13 +8,12 @@ lint:
 	go vet ./...
 
 test: lint format
+	for f in filters/*_test.lua; do pandoc lua "$$f"; done
 	go test -v ./...
+	./scripts/e2e-test.sh
 
 build:
 	go build -o bin/template_builder .
-
-e2e:
-	./scripts/e2e-test.sh
 
 run:
 	go run .

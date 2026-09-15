@@ -39,6 +39,7 @@ func assertNoError(t *testing.T, err error) {
 
 func TestPreambleDeclaresRequiredPackages(t *testing.T) {
 	expected := "\\usepackage{graphicx}\n" +
+		"\\usepackage{float}\n" +
 		"\\usepackage{tabularray}\n" +
 		"\\usepackage{xcolor}\n" +
 		"\\providecommand{\\tightlist}{%\n" +
@@ -137,6 +138,36 @@ func TestRunPandoc(t *testing.T) {
 
 		if !strings.Contains(actual, "colspec = {X[l]X[l]X[l]}") {
 			t.Errorf("expected columns to use wrapping X specs, got %q", actual)
+		}
+	})
+
+	t.Run("includes an image found next to the markdown file", func(t *testing.T) {
+		path := "testdata/image.md"
+
+		actual, err := runPandoc(path)
+
+		assertNoError(t, err)
+
+		if !strings.Contains(actual, "\\includegraphics[width=\\linewidth,height=\\textheight,keepaspectratio]{image.png}") {
+			t.Errorf("expected image to be included, got %q", actual)
+		}
+		if !strings.Contains(actual, "\\caption{a test image}") {
+			t.Errorf("expected image caption, got %q", actual)
+		}
+	})
+
+	t.Run("marks a missing image instead of including it", func(t *testing.T) {
+		path := "testdata/missing-image.md"
+
+		actual, err := runPandoc(path)
+
+		assertNoError(t, err)
+
+		if !strings.Contains(actual, "(missing image): a missing image") {
+			t.Errorf("expected missing image placeholder, got %q", actual)
+		}
+		if strings.Contains(actual, "\\includegraphics") {
+			t.Errorf("expected missing image not to be included, got %q", actual)
 		}
 	})
 }

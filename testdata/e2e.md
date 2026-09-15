@@ -38,3 +38,5 @@ Some text
 | Eve     | 29  | Marketing Lead    | Chicago       |
 
 ![a test image](image.png)
+
+![a missing image](does-not-exist.png)

@@ -26,16 +26,14 @@ local one_column_table = pandoc.Table(
   {},
   pandoc.TableFoot({})
 )
-local expected_one_column_table = "\\begin{center}\n"
-    .. "\\begin{tblr}{\n"
-    .. "  colspec = {l},\n"
+local expected_one_column_table = "\\begin{longtblr}{\n"
+    .. "  colspec = {X[l]},\n"
     .. "  row{1} = {bg=accent, fg=white, font=\\bfseries},\n"
     .. "  row{even} = {bg=gray!10},\n"
     .. "  hline{1,2,Z} = {solid, 0.8pt, accent},\n"
     .. "}\n"
     .. "Header \\\\\n"
-    .. "\\end{tblr}\n"
-    .. "\\end{center}"
+    .. "\\end{longtblr}"
 assert_equal(expected_one_column_table, tables.build_table(one_column_table), "build_table")
 
 print("all tests passed")
