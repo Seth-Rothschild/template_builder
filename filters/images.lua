@@ -72,4 +72,4 @@ function M.Figure(fig)
   return pandoc.RawBlock("latex", M.build_figure(fig))
 end
 
-return M
+return { M }

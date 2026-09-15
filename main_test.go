@@ -24,8 +24,6 @@ func TestHealthHandler(t *testing.T) {
 	assertEqual(t, http.StatusOK, recorder.Code)
 }
 
-
-
 func TestPort(t *testing.T) {
 	t.Run("defaults when env var not set", func(t *testing.T) {
 		os.Unsetenv("PORT")

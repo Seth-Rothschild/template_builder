@@ -1,4 +1,4 @@
-local tables = dofile("filters/tables.lua")
+local tables = dofile("filters/tables.lua")[1]
 
 local function assert_equal(expected, actual, message)
   if expected ~= actual then

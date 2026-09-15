@@ -1,4 +1,4 @@
-local images = dofile("filters/images.lua")
+local images = dofile("filters/images.lua")[1]
 
 local function assert_equal(expected, actual, message)
   if expected ~= actual then

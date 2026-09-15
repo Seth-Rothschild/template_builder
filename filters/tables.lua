@@ -47,4 +47,4 @@ function M.Table(tbl)
   return pandoc.RawBlock("latex", M.build_table(tbl))
 end
 
-return M
+return { M }
