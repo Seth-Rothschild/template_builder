@@ -1,0 +1,22 @@
+error: bad-image.tex:4: Unable to load picture or PDF file 'bad.png'
+error: something bad happened inside XeTeX; its output follows:
+
+===============================================================================
+(bad-image.tex
+LaTeX2e <2021-11-15> patch level 1
+L3 programming layer <2022-02-24> (article.cls
+Document Class: article 2021/10/04 v1.4n Standard LaTeX document class
+(size10.clo)) (graphicx.sty (keyval.sty) (graphics.sty (trig.sty) (graphics.cfg
+) (xetex.def))) (l3backend-xetex.def)
+No file bad-image.aux.
+(ts1cmr.fd)
+! Unable to load picture or PDF file 'bad.png'.
+<to be read again> 
+                   }
+l.4 \includegraphics{bad.png}
+                             
+No pages of output.
+Transcript written on bad-image.log.
+===============================================================================
+error: the XeTeX engine had an unrecoverable error
+caused by: halted on potentially-recoverable error as specified

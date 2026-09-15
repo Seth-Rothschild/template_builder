@@ -1,0 +1,4 @@
+Error parsing YAML metadata at "input.md" (line 1, column 1):
+YAML parse exception at line 2, column 0,
+while scanning a quoted scalar:
+found unexpected document indicator

@@ -1,5 +1,5 @@
 ---
-template_name: does-not-exist
+template_version: does-not-exist
 ---
 
 Some body text.

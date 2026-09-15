@@ -78,6 +78,25 @@ func TestRunPandoc(t *testing.T) {
 		}
 	})
 
+	t.Run("reports the line of invalid metadata", func(t *testing.T) {
+		path := "testdata/bad-yaml.md"
+
+		_, err := runPandoc(path)
+
+		expected := "invalid metadata near line 4: a list starting with \"[\" is never closed. " +
+			"Add the missing \"]\", or put the value in quotes if the \"[\" is part of the text."
+		assertEqual(t, expected, err.Error())
+	})
+
+	t.Run("reports an unknown template version", func(t *testing.T) {
+		path := "testdata/nonexistent-template.md"
+
+		_, err := runPandoc(path)
+
+		expected := "unknown template_version \"does-not-exist\""
+		assertEqual(t, expected, err.Error())
+	})
+
 	t.Run("uses default template when none given", func(t *testing.T) {
 		path := "testdata/minimal.md"
 

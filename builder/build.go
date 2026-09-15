@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"os/exec"
@@ -45,15 +46,27 @@ func getVersion(path string) (string, error) {
 	return version, nil
 }
 
+func runCommand(name string, args ...string) (string, string, error) {
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.Command(name, args...)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	return stdout.String(), stderr.String(), err
+}
+
 func runPandoc(path string) (string, error) {
 	version, err := getVersion(path)
 	if err != nil {
 		return "", err
 	}
-
 	template := "templates/default.tex"
 	if version != "" {
 		template = filepath.Join("templates", version+".tex")
+	}
+	if _, err := os.Stat(template); err != nil {
+		return "", fmt.Errorf("unknown template_version %q", version)
 	}
 
 	args := []string{}
@@ -65,17 +78,17 @@ func runPandoc(path string) (string, error) {
 	args = append(args, "-V", "header-includes="+preamble())
 	args = append(args, path)
 
-	output, err := exec.Command("pandoc", args...).Output()
+	latex, stderr, err := runCommand("pandoc", args...)
 	if err != nil {
-		return "", err
+		return "", parsePandocError(stderr)
 	}
-	return string(output), nil
+	return latex, nil
 }
 
 func runTectonic(texPath string, outDir string) (string, error) {
-	cmd := exec.Command("tectonic", texPath, "--outdir", outDir)
-	if output, err := cmd.CombinedOutput(); err != nil {
-		return "", fmt.Errorf("tectonic failed: %w: %s", err, output)
+	_, stderr, err := runCommand("tectonic", texPath, "--outdir", outDir)
+	if err != nil {
+		return "", parseTectonicError(stderr)
 	}
 
 	base := filepath.Base(texPath)

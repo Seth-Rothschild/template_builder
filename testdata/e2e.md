@@ -1,5 +1,5 @@
 ---
-template_name: slick
+template_version: slick
 title: End to End Test Document
 author: Test Author
 date: 2024-01-01
