@@ -66,7 +66,7 @@ func runPandoc(path string) (string, error) {
 		template = filepath.Join("templates", version+".tex")
 	}
 	if _, err := os.Stat(template); err != nil {
-		return "", fmt.Errorf("unknown template_version %q", version)
+		return "", userError("unknown template_version %q", version)
 	}
 
 	args := []string{}
@@ -79,6 +79,9 @@ func runPandoc(path string) (string, error) {
 	args = append(args, path)
 
 	latex, stderr, err := runCommand("pandoc", args...)
+	if err != nil && stderr == "" {
+		return "", fmt.Errorf("could not run pandoc: %w", err)
+	}
 	if err != nil {
 		return "", parsePandocError(stderr)
 	}
@@ -87,6 +90,9 @@ func runPandoc(path string) (string, error) {
 
 func runTectonic(texPath string, outDir string) (string, error) {
 	_, stderr, err := runCommand("tectonic", texPath, "--outdir", outDir)
+	if err != nil && stderr == "" {
+		return "", fmt.Errorf("could not run tectonic: %w", err)
+	}
 	if err != nil {
 		return "", parseTectonicError(stderr)
 	}

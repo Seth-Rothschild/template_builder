@@ -46,6 +46,10 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	pdfPath, err := builder.Build(mdPath)
+	if builder.IsUserError(err) {
+		http.Error(w, err.Error(), http.StatusUnprocessableEntity)
+		return
+	}
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -70,6 +74,10 @@ func oneshot(mdPath string) {
 }
 
 func main() {
+	if err := builder.CheckSetup(); err != nil {
+		log.Fatal(err)
+	}
+
 	if len(os.Args) > 1 {
 		oneshot(os.Args[1])
 		return

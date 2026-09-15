@@ -24,21 +24,7 @@ func TestHealthHandler(t *testing.T) {
 	assertEqual(t, http.StatusOK, recorder.Code)
 }
 
-func TestBuildHandler(t *testing.T) {
-	markdown := "# Heading\n"
-	request := httptest.NewRequest(http.MethodPost, "/build", strings.NewReader(markdown))
-	recorder := httptest.NewRecorder()
 
-	buildHandler(recorder, request)
-
-	assertEqual(t, http.StatusOK, recorder.Code)
-	assertEqual(t, "application/pdf", recorder.Header().Get("Content-Type"))
-
-	body := recorder.Body.Bytes()
-	if len(body) < 4 || string(body[:4]) != "%PDF" {
-		t.Errorf("expected response body to be a pdf, got %q", string(body[:min(len(body), 20)]))
-	}
-}
 
 func TestPort(t *testing.T) {
 	t.Run("defaults when env var not set", func(t *testing.T) {
@@ -58,5 +44,49 @@ func TestPort(t *testing.T) {
 		actual := port()
 
 		assertEqual(t, expected, actual)
+	})
+}
+
+func TestBuildHandler(t *testing.T) {
+	markdown := "# Heading\n"
+	request := httptest.NewRequest(http.MethodPost, "/build", strings.NewReader(markdown))
+	recorder := httptest.NewRecorder()
+
+	buildHandler(recorder, request)
+
+	assertEqual(t, http.StatusOK, recorder.Code)
+	assertEqual(t, "application/pdf", recorder.Header().Get("Content-Type"))
+
+	body := recorder.Body.Bytes()
+	if len(body) < 4 || string(body[:4]) != "%PDF" {
+		t.Errorf("expected response body to be a pdf, got %q", string(body[:min(len(body), 20)]))
+	}
+}
+
+func TestBuildHandlerErrors(t *testing.T) {
+	t.Run("returns 422 for a mistake in the document", func(t *testing.T) {
+		markdown := "---\ntitle: [unclosed\n---\n\nSome body text.\n"
+		request := httptest.NewRequest(http.MethodPost, "/build", strings.NewReader(markdown))
+		recorder := httptest.NewRecorder()
+
+		buildHandler(recorder, request)
+
+		assertEqual(t, http.StatusUnprocessableEntity, recorder.Code)
+		expected := "invalid metadata near line 3: a list starting with \"[\" is never closed. " +
+			"Add the missing \"]\", or put the value in quotes if the \"[\" is part of the text.\n"
+		assertEqual(t, expected, recorder.Body.String())
+	})
+
+	t.Run("returns 500 when the server cannot build", func(t *testing.T) {
+		t.Setenv("PATH", "")
+		markdown := "# Heading\n"
+		request := httptest.NewRequest(http.MethodPost, "/build", strings.NewReader(markdown))
+		recorder := httptest.NewRecorder()
+
+		buildHandler(recorder, request)
+
+		assertEqual(t, http.StatusInternalServerError, recorder.Code)
+		expected := "could not run pandoc: exec: \"pandoc\": executable file not found in $PATH\n"
+		assertEqual(t, expected, recorder.Body.String())
 	})
 }

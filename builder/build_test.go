@@ -78,6 +78,17 @@ func TestRunPandoc(t *testing.T) {
 		}
 	})
 
+	t.Run("reports a program that could not run", func(t *testing.T) {
+		t.Setenv("PATH", "")
+		path := "testdata/minimal.md"
+
+		_, err := runPandoc(path)
+
+		expected := "could not run pandoc: exec: \"pandoc\": executable file not found in $PATH"
+		assertEqual(t, expected, err.Error())
+		assertEqual(t, false, IsUserError(err))
+	})
+
 	t.Run("reports the line of invalid metadata", func(t *testing.T) {
 		path := "testdata/bad-yaml.md"
 
@@ -95,6 +106,7 @@ func TestRunPandoc(t *testing.T) {
 
 		expected := "unknown template_version \"does-not-exist\""
 		assertEqual(t, expected, err.Error())
+		assertEqual(t, true, IsUserError(err))
 	})
 
 	t.Run("uses default template when none given", func(t *testing.T) {

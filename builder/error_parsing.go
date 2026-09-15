@@ -41,7 +41,7 @@ func parsePandocError(stderr string) error {
 			reason = explanation
 		}
 	}
-	return fmt.Errorf("invalid metadata near line %d: %s", line, reason)
+	return userError("invalid metadata near line %d: %s", line, reason)
 }
 
 func parseTectonicError(stderr string) error {
@@ -54,7 +54,7 @@ func parseTectonicError(stderr string) error {
 	badImage := badImagePattern.FindStringSubmatch(stderr)
 	if badImage != nil {
 		imageName := badImage[1]
-		return fmt.Errorf("could not render pdf: could not load image %q. Make sure it is a real PNG, JPEG, or PDF file, not another format renamed to one of those extensions.", imageName)
+		return userError("could not render pdf: could not load image %q. Make sure it is a real PNG, JPEG, or PDF file, not another format renamed to one of those extensions.", imageName)
 	}
 
 	undefinedCommand := undefinedCommandPattern.FindStringSubmatch(stderr)
@@ -70,4 +70,22 @@ func parseTectonicError(stderr string) error {
 	}
 
 	return errors.New(stderr)
+}
+
+type UserError struct {
+	message string
+}
+
+func (e UserError) Error() string {
+	return e.message
+}
+
+func userError(format string, args ...any) error {
+	message := fmt.Sprintf(format, args...)
+	return UserError{message: message}
+}
+
+func IsUserError(err error) bool {
+	var target UserError
+	return errors.As(err, &target)
 }
