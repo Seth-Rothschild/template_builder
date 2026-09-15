@@ -41,7 +41,7 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pdfPath, err := builder.Build(mdPath, "")
+	pdfPath, err := builder.Build(mdPath)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
@@ -58,7 +58,7 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func oneshot(mdPath string) {
-	pdfPath, err := builder.Build(mdPath, "")
+	pdfPath, err := builder.Build(mdPath)
 	if err != nil {
 		log.Fatal(err)
 	}

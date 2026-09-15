@@ -30,13 +30,6 @@ func assertEqual(t *testing.T, expected, actual interface{}) {
 	}
 }
 
-func assertError(t *testing.T, err error) {
-	t.Helper()
-	if err == nil {
-		t.Errorf("expected an error, got nil")
-	}
-}
-
 func assertNoError(t *testing.T, err error) {
 	t.Helper()
 	if err != nil {
@@ -44,14 +37,41 @@ func assertNoError(t *testing.T, err error) {
 	}
 }
 
-func TestPandocConvertMarkdownToLatex(t *testing.T) {
+func TestPreambleDeclaresRequiredPackages(t *testing.T) {
+	expected := "\\usepackage{graphicx}\n" +
+		"\\usepackage{tabularray}\n" +
+		"\\usepackage{xcolor}\n" +
+		"\\providecommand{\\tightlist}{%\n" +
+		"  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}\n" +
+		"\\providecommand{\\pandocbounded}[1]{#1}\n" +
+		"\\providecolor{accent}{HTML}{2C6E91}\n"
+	actual := preamble()
+
+	assertEqual(t, expected, actual)
+}
+
+func TestTemplateVersion(t *testing.T) {
+	t.Run("returns template version from metadata", func(t *testing.T) {
+		path := "testdata/slick-template.md"
+		actual, err := getVersion(path)
+		assertNoError(t, err)
+		assertEqual(t, "slick", actual)
+	})
+
+	t.Run("returns empty when no metadata", func(t *testing.T) {
+		path := "testdata/nometadata.md"
+		actual, err := getVersion(path)
+		assertNoError(t, err)
+		assertEqual(t, "", actual)
+	})
+}
+
+func TestRunPandoc(t *testing.T) {
 	t.Run("returns error for nonexistent file", func(t *testing.T) {
 		path := "testdata/does-not-exist.md"
-		template := ""
 
-		_, err := pandocConvertMarkdownToLatex(path, template)
+		_, err := runPandoc(path)
 
-		assertError(t, err)
 		if !os.IsNotExist(err) {
 			t.Errorf("expected a not-exist error, got %v", err)
 		}
@@ -59,9 +79,8 @@ func TestPandocConvertMarkdownToLatex(t *testing.T) {
 
 	t.Run("uses default template when none given", func(t *testing.T) {
 		path := "testdata/minimal.md"
-		template := ""
 
-		actual, err := pandocConvertMarkdownToLatex(path, template)
+		actual, err := runPandoc(path)
 
 		assertNoError(t, err)
 
@@ -70,11 +89,22 @@ func TestPandocConvertMarkdownToLatex(t *testing.T) {
 		}
 	})
 
+	t.Run("uses template named by metadata", func(t *testing.T) {
+		path := "testdata/slick-template.md"
+
+		actual, err := runPandoc(path)
+
+		assertNoError(t, err)
+
+		if !strings.Contains(actual, "\\setstretch{1.15}") {
+			t.Errorf("expected output to be built from the slick template, got %q", actual)
+		}
+	})
+
 	t.Run("gfm treats list without blank line above as list", func(t *testing.T) {
 		path := "testdata/list-no-blank-line.md"
-		template := ""
 
-		actual, err := pandocConvertMarkdownToLatex(path, template)
+		actual, err := runPandoc(path)
 
 		assertNoError(t, err)
 
@@ -85,9 +115,8 @@ func TestPandocConvertMarkdownToLatex(t *testing.T) {
 
 	t.Run("uses tabularray instead of longtable for tables", func(t *testing.T) {
 		path := "testdata/table.md"
-		template := ""
 
-		actual, err := pandocConvertMarkdownToLatex(path, template)
+		actual, err := runPandoc(path)
 
 		assertNoError(t, err)
 
@@ -100,42 +129,11 @@ func TestPandocConvertMarkdownToLatex(t *testing.T) {
 	})
 }
 
-func TestPreambleDeclaresRequiredPackages(t *testing.T) {
-	expected := "\\usepackage{graphicx}\n" +
-		"\\usepackage{tabularray}\n" +
-		"\\usepackage{xcolor}\n" +
-		"\\providecommand{\\tightlist}{%\n" +
-		"  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}\n" +
-		"\\providecommand{\\pandocbounded}[1]{#1}\n" +
-		"\\providecolor{accent}{HTML}{2C6E91}\n" +
-		"\\usepackage{xeCJK}\n" +
-		"\\setCJKmainfont{FandolHei-Regular.otf}\n"
-	actual := preamble()
-
-	assertEqual(t, expected, actual)
-}
-
-func TestParseTemplateVersion(t *testing.T) {
-	t.Run("returns template version from metadata", func(t *testing.T) {
-		path := "testdata/slick-template.md"
-		actual, err := parseTemplateVersion(path)
-		assertNoError(t, err)
-		assertEqual(t, "slick", actual)
-	})
-
-	t.Run("returns empty when no metadata", func(t *testing.T) {
-		path := "testdata/nometadata.md"
-		actual, err := parseTemplateVersion(path)
-		assertNoError(t, err)
-		assertEqual(t, "", actual)
-	})
-}
-
-func TestBuildLatex(t *testing.T) {
+func TestRunTectonic(t *testing.T) {
 	texPath := "testdata/sample.tex"
 	outDir := t.TempDir()
 
-	pdfPath, err := buildLatex(texPath, outDir)
+	pdfPath, err := runTectonic(texPath, outDir)
 	assertNoError(t, err)
 
 	if _, statErr := os.Stat(pdfPath); statErr != nil {
@@ -149,7 +147,7 @@ func TestBuild(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pdfPath, err := Build(mdPath, "")
+	pdfPath, err := Build(mdPath)
 	assertNoError(t, err)
 
 	expectedPdfPath := filepath.Join(filepath.Dir(mdPath), "minimal.pdf")

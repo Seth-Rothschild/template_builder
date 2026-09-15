@@ -8,7 +8,18 @@ import (
 	"strings"
 )
 
-func parseTemplateVersion(path string) (string, error) {
+func preamble() string {
+	lines := []string{}
+	lines = append(lines, "\\usepackage{graphicx}")
+	lines = append(lines, "\\usepackage{tabularray}")
+	lines = append(lines, "\\usepackage{xcolor}")
+	lines = append(lines, "\\providecommand{\\tightlist}{%\n  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}")
+	lines = append(lines, "\\providecommand{\\pandocbounded}[1]{#1}")
+	lines = append(lines, "\\providecolor{accent}{HTML}{2C6E91}")
+	return strings.Join(lines, "\n") + "\n"
+}
+
+func getVersion(path string) (string, error) {
 	content, err := os.ReadFile(path)
 	if err != nil {
 		return "", err
@@ -28,29 +39,20 @@ func parseTemplateVersion(path string) (string, error) {
 	if strings.TrimSpace(key) != "template_version" {
 		return "", nil
 	}
-	return strings.TrimSpace(value), nil
+	version := strings.TrimSpace(value)
+
+	return version, nil
 }
 
-func preamble() string {
-	lines := []string{}
-	lines = append(lines, "\\usepackage{graphicx}")
-	lines = append(lines, "\\usepackage{tabularray}")
-	lines = append(lines, "\\usepackage{xcolor}")
-	lines = append(lines, "\\providecommand{\\tightlist}{%\n  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}")
-	lines = append(lines, "\\providecommand{\\pandocbounded}[1]{#1}")
-	lines = append(lines, "\\providecolor{accent}{HTML}{2C6E91}")
-	lines = append(lines, "\\usepackage{xeCJK}")
-	lines = append(lines, "\\setCJKmainfont{FandolHei-Regular.otf}")
-	return strings.Join(lines, "\n") + "\n"
-}
-
-func pandocConvertMarkdownToLatex(path string, template string) (string, error) {
-	if _, err := os.Stat(path); err != nil {
+func runPandoc(path string) (string, error) {
+	version, err := getVersion(path)
+	if err != nil {
 		return "", err
 	}
 
-	if template == "" {
-		template = "templates/default.tex"
+	template := "templates/default.tex"
+	if version != "" {
+		template = filepath.Join("templates", version+".tex")
 	}
 
 	args := []string{}
@@ -68,7 +70,7 @@ func pandocConvertMarkdownToLatex(path string, template string) (string, error) 
 	return string(output), nil
 }
 
-func buildLatex(texPath string, outDir string) (string, error) {
+func runTectonic(texPath string, outDir string) (string, error) {
 	cmd := exec.Command("tectonic", texPath, "--outdir", outDir)
 	if output, err := cmd.CombinedOutput(); err != nil {
 		return "", fmt.Errorf("tectonic failed: %w: %s", err, output)
@@ -79,8 +81,8 @@ func buildLatex(texPath string, outDir string) (string, error) {
 	return filepath.Join(outDir, pdfName), nil
 }
 
-func Build(mdPath string, template string) (string, error) {
-	latex, err := pandocConvertMarkdownToLatex(mdPath, template)
+func Build(mdPath string) (string, error) {
+	latex, err := runPandoc(mdPath)
 	if err != nil {
 		return "", err
 	}
@@ -92,5 +94,5 @@ func Build(mdPath string, template string) (string, error) {
 	if err := os.WriteFile(texPath, []byte(latex), 0644); err != nil {
 		return "", err
 	}
-	return buildLatex(texPath, outDir)
+	return runTectonic(texPath, outDir)
 }
