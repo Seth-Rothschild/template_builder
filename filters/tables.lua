@@ -16,7 +16,7 @@ end
 
 function M.build_table(tbl)
   local column_count = #tbl.colspecs
-  local column_spec = string.rep("l", column_count)
+  local column_spec = string.rep("X[l]", column_count)
 
   local rows = {}
   for _, row in ipairs(tbl.head.rows) do
@@ -29,8 +29,7 @@ function M.build_table(tbl)
   end
 
   local lines = {}
-  table.insert(lines, "\\begin{center}")
-  table.insert(lines, "\\begin{tblr}{")
+  table.insert(lines, "\\begin{longtblr}{")
   table.insert(lines, "  colspec = {" .. column_spec .. "},")
   table.insert(lines, "  row{1} = {bg=accent, fg=white, font=\\bfseries},")
   table.insert(lines, "  row{even} = {bg=gray!10},")
@@ -39,8 +38,7 @@ function M.build_table(tbl)
   for _, row in ipairs(rows) do
     table.insert(lines, row)
   end
-  table.insert(lines, "\\end{tblr}")
-  table.insert(lines, "\\end{center}")
+  table.insert(lines, "\\end{longtblr}")
 
   return table.concat(lines, "\n")
 end

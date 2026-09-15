@@ -113,18 +113,30 @@ func TestRunPandoc(t *testing.T) {
 		}
 	})
 
-	t.Run("uses tabularray instead of longtable for tables", func(t *testing.T) {
+	t.Run("uses tabularray instead of pandoc's longtable for tables", func(t *testing.T) {
 		path := "testdata/table.md"
 
 		actual, err := runPandoc(path)
 
 		assertNoError(t, err)
 
-		if !strings.Contains(actual, "\\begin{tblr}") {
-			t.Errorf("expected table to use tblr, got %q", actual)
+		if !strings.Contains(actual, "\\begin{longtblr}") {
+			t.Errorf("expected table to use longtblr, got %q", actual)
 		}
 		if strings.Contains(actual, "\\begin{longtable}") {
-			t.Errorf("expected table not to use longtable, got %q", actual)
+			t.Errorf("expected table not to use pandoc's longtable, got %q", actual)
+		}
+	})
+
+	t.Run("wraps long cell text and breaks across pages", func(t *testing.T) {
+		path := "testdata/llm-pros-cons.md"
+
+		actual, err := runPandoc(path)
+
+		assertNoError(t, err)
+
+		if !strings.Contains(actual, "colspec = {X[l]X[l]X[l]}") {
+			t.Errorf("expected columns to use wrapping X specs, got %q", actual)
 		}
 	})
 }

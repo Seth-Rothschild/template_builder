@@ -1,3 +1,5 @@
 bin
 e2e-output.pdf
 *.log
+testdata/*.pdf
+testdata/*.tex
