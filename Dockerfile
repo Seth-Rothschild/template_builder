@@ -2,6 +2,7 @@ FROM golang:1.23 AS build
 WORKDIR /src
 COPY go.mod ./
 COPY main.go ./
+COPY builder ./builder
 RUN CGO_ENABLED=0 go build -o /template_builder .
 
 FROM debian:bookworm-slim

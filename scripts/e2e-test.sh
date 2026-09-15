@@ -2,7 +2,7 @@
 set -e
 
 port=8099
-# output=testdata/e2e-output.pdf
+output=testdata/e2e-output.pdf
 
 go build -o bin/template_builder .
 
@@ -20,16 +20,26 @@ fi
 
 echo "e2e test passed: /health returned 200"
 
-# curl -fs \
-#     -F "file=@testdata/e2e.md" \
-#     -F "images=@testdata/image.png" \
-#     "http://localhost:$port/build" \
-#     -o "$output"
+oneshot_dir=$(mktemp -d)
+cp testdata/minimal.md "$oneshot_dir/minimal.md"
+make oneshot "$oneshot_dir/minimal.md"
 
-# if ! head -c 4 "$output" | grep -q "%PDF"; then
-#     echo "expected $output to be a pdf, got:"
-#     cat "$output"
-#     exit 1
-# fi
+if ! head -c 4 "$oneshot_dir/minimal.pdf" | grep -q "%PDF"; then
+    echo "expected $oneshot_dir/minimal.pdf to be a pdf"
+    exit 1
+fi
 
-# echo "e2e test passed: $output is a valid pdf"
+echo "e2e test passed: make oneshot produced a valid pdf"
+
+curl -fs \
+    --data-binary @testdata/minimal.md \
+    "http://localhost:$port/build" \
+    -o "$output"
+
+if ! head -c 4 "$output" | grep -q "%PDF"; then
+    echo "expected $output to be a pdf, got:"
+    cat "$output"
+    exit 1
+fi
+
+echo "e2e test passed: $output is a valid pdf"

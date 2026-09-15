@@ -19,4 +19,12 @@ e2e:
 run:
 	go run .
 
+ifeq (oneshot,$(firstword $(MAKECMDGOALS)))
+  ONESHOT_FILE := $(word 2,$(MAKECMDGOALS))
+  $(eval $(ONESHOT_FILE):;@:)
+endif
+
+oneshot: build
+	./bin/template_builder $(ONESHOT_FILE)
+
 
