@@ -12,6 +12,10 @@ test: lint format
 	go test -v ./...
 	./scripts/e2e-test.sh
 
+benchmark:
+	go test -run=^$$ -bench=BenchmarkBuildHandler$$ -benchtime=10x .
+	go test -run=^$$ -bench=BenchmarkBuildHandlerParallel -benchtime=16x -cpu=1,2,4,8 .
+
 build:
 	go build -o bin/template_builder .
 

@@ -1,10 +1,8 @@
 package builder
 
 import (
-	"bytes"
 	"fmt"
 	"os"
-	"os/exec"
 	"path/filepath"
 	"strings"
 )
@@ -46,16 +44,6 @@ func getVersion(path string) (string, error) {
 	return version, nil
 }
 
-func runCommand(name string, args ...string) (string, string, error) {
-	var stdout bytes.Buffer
-	var stderr bytes.Buffer
-	cmd := exec.Command(name, args...)
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	err := cmd.Run()
-	return stdout.String(), stderr.String(), err
-}
-
 func runPandoc(path string) (string, error) {
 	version, err := getVersion(path)
 	if err != nil {
@@ -78,7 +66,7 @@ func runPandoc(path string) (string, error) {
 	args = append(args, "-V", "header-includes="+preamble())
 	args = append(args, path)
 
-	latex, stderr, err := runCommand("pandoc", args...)
+	latex, stderr, err := RunCommand("pandoc", args...)
 	if err != nil && stderr == "" {
 		return "", fmt.Errorf("could not run pandoc: %w", err)
 	}
@@ -89,7 +77,7 @@ func runPandoc(path string) (string, error) {
 }
 
 func runTectonic(texPath string, outDir string) (string, error) {
-	_, stderr, err := runCommand("tectonic", texPath, "--outdir", outDir)
+	_, stderr, err := RunCommand("tectonic", texPath, "--outdir", outDir)
 	if err != nil && stderr == "" {
 		return "", fmt.Errorf("could not run tectonic: %w", err)
 	}

@@ -1,15 +1,18 @@
 package builder
 
 import (
+	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"os"
 	"os/exec"
+	"time"
 )
 
 var requiredPrograms = []string{"pandoc", "tectonic"}
-
 var requiredFiles = []string{"templates/default.tex", "filters/tables.lua", "filters/images.lua"}
+var commandTimeout = 30 * time.Second
 
 func CheckSetup() error {
 	problems := []error{}
@@ -30,4 +33,20 @@ func CheckSetup() error {
 	}
 
 	return errors.Join(problems...)
+}
+
+func RunCommand(name string, args ...string) (string, string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), commandTimeout)
+	defer cancel()
+
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
+	cmd := exec.CommandContext(ctx, name, args...)
+	cmd.Stdout = &stdout
+	cmd.Stderr = &stderr
+	err := cmd.Run()
+	if ctx.Err() != nil {
+		return "", "", ctx.Err()
+	}
+	return stdout.String(), stderr.String(), err
 }

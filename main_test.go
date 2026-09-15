@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -86,5 +87,40 @@ func TestBuildHandlerErrors(t *testing.T) {
 		assertEqual(t, http.StatusInternalServerError, recorder.Code)
 		expected := "could not run pandoc: exec: \"pandoc\": executable file not found in $PATH\n"
 		assertEqual(t, expected, recorder.Body.String())
+	})
+}
+
+func postBuild(b *testing.B, markdown []byte) {
+	request := httptest.NewRequest(http.MethodPost, "/build", bytes.NewReader(markdown))
+	recorder := httptest.NewRecorder()
+
+	buildHandler(recorder, request)
+
+	if recorder.Code != http.StatusOK {
+		b.Errorf("expected status 200, got %d: %s", recorder.Code, recorder.Body.String())
+	}
+}
+
+func BenchmarkBuildHandler(b *testing.B) {
+	markdown, err := os.ReadFile("testdata/e2e.md")
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	for b.Loop() {
+		postBuild(b, markdown)
+	}
+}
+
+func BenchmarkBuildHandlerParallel(b *testing.B) {
+	markdown, err := os.ReadFile("testdata/e2e.md")
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	b.RunParallel(func(pb *testing.PB) {
+		for pb.Next() {
+			postBuild(b, markdown)
+		}
 	})
 }

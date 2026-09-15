@@ -1,8 +1,11 @@
 package builder
 
 import (
+	"context"
+	"errors"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestCheckSetup(t *testing.T) {
@@ -33,4 +36,15 @@ func TestCheckSetup(t *testing.T) {
 			"setup problem: filters/images.lua not found in " + workingDir + ", run template_builder from the repository root"
 		assertEqual(t, expected, err.Error())
 	})
+}
+
+func TestRunCommandTimeout(t *testing.T) {
+	commandTimeout = 0
+	t.Cleanup(func() { commandTimeout = 30 * time.Second })
+
+	_, _, err := RunCommand("pandoc", "--version")
+
+	if !errors.Is(err, context.DeadlineExceeded) {
+		t.Errorf("expected a deadline exceeded error, got %v", err)
+	}
 }
