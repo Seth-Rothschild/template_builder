@@ -17,6 +17,9 @@ COPY testdata/sample.tex /tmp/warm/sample.tex
 RUN tectonic /tmp/warm/sample.tex --outdir /tmp/warm \
     && rm -rf /tmp/warm
 
-COPY --from=build /template_builder /template_builder
+WORKDIR /app
+COPY --from=build /template_builder /app/template_builder
+COPY templates ./templates
+COPY filters ./filters
 EXPOSE 8080
-ENTRYPOINT ["/template_builder"]
+ENTRYPOINT ["/app/template_builder"]
