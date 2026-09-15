@@ -8,25 +8,9 @@ function M.source_dir()
   return input_file:match("^(.*)/[^/]+$")
 end
 
-function M.resolve_path(src)
+function M.disk_path(src)
   if src:sub(1, 1) == "/" then
     return src
-  end
-  local image_dir = os.getenv("IMAGE_DIR")
-  if image_dir == nil or image_dir == "" then
-    return src
-  end
-  return image_dir .. "/" .. src
-end
-
--- The path pandoc's own working directory needs in order to find the file on
--- disk, which may differ from the path written into the .tex file below: the
--- .tex file is emitted next to the markdown source, so a bare relative src
--- (no IMAGE_DIR) already resolves correctly for tectonic without rewriting.
-function M.check_path(src)
-  local resolved = M.resolve_path(src)
-  if resolved ~= src then
-    return resolved
   end
   local source_dir = M.source_dir()
   if source_dir == nil then
@@ -64,14 +48,17 @@ end
 function M.build_figure(fig)
   local image = M.find_image(fig)
   local caption = M.render_caption(fig)
-  local resolved_src = image ~= nil and M.resolve_path(image.src) or nil
-  local checked_src = image ~= nil and M.check_path(image.src) or nil
+
+  local found = false
+  if image ~= nil then
+    found = M.image_exists(M.disk_path(image.src))
+  end
 
   local lines = {}
   table.insert(lines, "\\begin{figure}[H]")
   table.insert(lines, "\\centering")
-  if checked_src ~= nil and M.image_exists(checked_src) then
-    table.insert(lines, "\\includegraphics[width=\\linewidth,height=\\textheight,keepaspectratio]{" .. resolved_src .. "}")
+  if found then
+    table.insert(lines, "\\includegraphics[width=\\linewidth,height=\\textheight,keepaspectratio]{" .. image.src .. "}")
     table.insert(lines, "\\caption{" .. caption .. "}")
   else
     table.insert(lines, "\\refstepcounter{figure}Figure \\thefigure{} (missing image): " .. caption)
