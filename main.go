@@ -4,7 +4,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
 
 	"template_builder/builder"
 )
@@ -21,12 +20,6 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func buildHandler(w http.ResponseWriter, r *http.Request) {
-	markdown, err := readMarkdown(r)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
 	tempDir, err := os.MkdirTemp("", "template_builder")
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
@@ -34,14 +27,9 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	if err := writeImages(r, tempDir); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	mdPath := filepath.Join(tempDir, "input.md")
-	if err := os.WriteFile(mdPath, markdown, 0644); err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+	mdPath, err := ParseRequest(r, tempDir)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
 

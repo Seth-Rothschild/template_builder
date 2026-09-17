@@ -1,45 +1,118 @@
 package main
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
 )
 
-func readMarkdown(r *http.Request) ([]byte, error) {
+func getRequestType(r *http.Request) string {
 	contentType := r.Header.Get("Content-Type")
-	if !strings.HasPrefix(contentType, "multipart/form-data") {
-		return io.ReadAll(r.Body)
-	}
-
-	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		return nil, err
-	}
-	markdown := r.FormValue("markdown")
-	return []byte(markdown), nil
+	mediaType, _, _ := strings.Cut(contentType, ";")
+	return strings.TrimSpace(mediaType)
 }
 
-func writeImages(r *http.Request, dir string) error {
-	if r.MultipartForm == nil {
-		return nil
+func writeMarkdown(dir string, markdown string) (string, error) {
+	mdPath := filepath.Join(dir, "input.md")
+	if err := os.WriteFile(mdPath, []byte(markdown), 0644); err != nil {
+		return "", err
+	}
+	return mdPath, nil
+}
+
+func writeMultipartImage(dir string, header *multipart.FileHeader) error {
+	image, err := header.Open()
+	if err != nil {
+		return err
+	}
+	defer image.Close()
+
+	content, err := io.ReadAll(image)
+	if err != nil {
+		return err
+	}
+
+	imagePath := filepath.Join(dir, header.Filename)
+	return os.WriteFile(imagePath, content, 0644)
+}
+
+func writeBase64Image(dir string, filename string, data string) error {
+	content, err := base64.StdEncoding.DecodeString(data)
+	if err != nil {
+		return fmt.Errorf("image %q: %w", filename, err)
+	}
+	imagePath := filepath.Join(dir, filename)
+	return os.WriteFile(imagePath, content, 0644)
+}
+
+func parseMultipart(r *http.Request, dir string) (string, error) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		return "", err
+	}
+
+	markdown := r.FormValue("markdown")
+	mdPath, err := writeMarkdown(dir, markdown)
+	if err != nil {
+		return "", err
 	}
 
 	for _, header := range r.MultipartForm.File["images"] {
-		image, err := header.Open()
-		if err != nil {
-			return err
-		}
-		content, err := io.ReadAll(image)
-		image.Close()
-		if err != nil {
-			return err
-		}
-		imagePath := filepath.Join(dir, header.Filename)
-		if err := os.WriteFile(imagePath, content, 0644); err != nil {
-			return err
+		if err := writeMultipartImage(dir, header); err != nil {
+			return "", err
 		}
 	}
-	return nil
+
+	return mdPath, nil
+}
+
+func parseJSON(r *http.Request, dir string) (string, error) {
+	var body struct {
+		Markdown string `json:"markdown"`
+		Images   []struct {
+			Filename string `json:"filename"`
+			Data     string `json:"data"`
+		} `json:"images"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		return "", err
+	}
+
+	mdPath, err := writeMarkdown(dir, body.Markdown)
+	if err != nil {
+		return "", err
+	}
+
+	for _, image := range body.Images {
+		err := writeBase64Image(dir, image.Filename, image.Data)
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return mdPath, nil
+}
+
+func parsePlainMarkdown(r *http.Request, dir string) (string, error) {
+	markdown, err := io.ReadAll(r.Body)
+	if err != nil {
+		return "", err
+	}
+	return writeMarkdown(dir, string(markdown))
+}
+
+func ParseRequest(r *http.Request, dir string) (string, error) {
+	switch getRequestType(r) {
+	case "multipart/form-data":
+		return parseMultipart(r, dir)
+	case "application/json":
+		return parseJSON(r, dir)
+	default:
+		return parsePlainMarkdown(r, dir)
+	}
 }
