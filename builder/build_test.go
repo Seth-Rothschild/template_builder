@@ -42,6 +42,11 @@ func TestPreambleDeclaresRequiredPackages(t *testing.T) {
 		"\\usepackage{float}\n" +
 		"\\usepackage{tabularray}\n" +
 		"\\usepackage{xcolor}\n" +
+		"\\usepackage{soul}\n" +
+		"\\usepackage{fvextra}\n" +
+		"\\usepackage{hyperref}\n" +
+		"\\fvset{breaklines=true, breakanywhere=true}\n" +
+		"\\setlength{\\emergencystretch}{3em}\n" +
 		"\\providecommand{\\tightlist}{%\n" +
 		"  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}\n" +
 		"\\providecommand{\\pandocbounded}[1]{#1}\n" +

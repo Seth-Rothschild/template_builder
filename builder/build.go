@@ -13,10 +13,22 @@ func preamble() string {
 	lines = append(lines, "\\usepackage{float}")
 	lines = append(lines, "\\usepackage{tabularray}")
 	lines = append(lines, "\\usepackage{xcolor}")
+	lines = append(lines, "\\usepackage{soul}")
+	lines = append(lines, "\\usepackage{fvextra}")
+	lines = append(lines, "\\usepackage{hyperref}")
+	lines = append(lines, "\\fvset{breaklines=true, breakanywhere=true}")
+	lines = append(lines, "\\setlength{\\emergencystretch}{3em}")
 	lines = append(lines, "\\providecommand{\\tightlist}{%\n  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}")
 	lines = append(lines, "\\providecommand{\\pandocbounded}[1]{#1}")
 	lines = append(lines, "\\providecolor{accent}{HTML}{2C6E91}")
 	return strings.Join(lines, "\n") + "\n"
+}
+
+func inputFormat() string {
+	extensions := []string{}
+	extensions = append(extensions, "+lists_without_preceding_blankline")
+	extensions = append(extensions, "+gfm_auto_identifiers")
+	return "markdown" + strings.Join(extensions, "")
 }
 
 func getVersion(path string) (string, error) {
@@ -58,7 +70,7 @@ func runPandoc(path string) (string, error) {
 	}
 
 	args := []string{}
-	args = append(args, "-f", "gfm+implicit_figures")
+	args = append(args, "-f", inputFormat())
 	args = append(args, "-t", "latex")
 	args = append(args, "--template", template)
 	args = append(args, "--lua-filter", "filters/tables.lua")

@@ -11,6 +11,9 @@
 \usepackage{setspace}
 \setstretch{1.15}
 $header-includes$
+$if(highlighting-macros)$
+$highlighting-macros$
+$endif$
 
 \usepackage{titlesec}
 \usepackage{fancyhdr}
@@ -18,18 +21,20 @@ $header-includes$
 
 \providecolor{textgray}{HTML}{333333}
 
-\setcounter{secnumdepth}{0}
-
-\titleformat{\section}{\color{accent}\Large\bfseries}{}{0em}{}[{\color{accent}\titlerule[1pt]}]
-\titleformat{\subsection}{\color{accent}\large\bfseries}{}{0em}{}
+\titleformat{\section}{\color{accent}\Large\bfseries}{\thesection}{0.75em}{}[{\color{accent}\titlerule[1pt]}]
+\titleformat{\subsection}{\color{accent}\large\bfseries}{\thesubsection}{0.75em}{}
 \titlespacing*{\section}{0pt}{1.5em}{0.8em}
 
 \pagestyle{fancy}
 \fancyhf{}
 \renewcommand{\headrulewidth}{0.4pt}
 \renewcommand{\footrulewidth}{0pt}
-\fancyhead[L]{\small\color{accent}$if(title)$$title$$endif$}
-\fancyfoot[R]{\small\color{textgray}\thepage}
+\fancyhead[L]{\small\color{accent}$if(header-left)$$header-left$$else$$title$$endif$}
+\fancyhead[C]{\small\color{accent}$header-center$}
+\fancyhead[R]{\small\color{accent}$header-right$}
+\fancyfoot[L]{\small\color{textgray}$footer-left$}
+\fancyfoot[C]{\small\color{textgray}$footer-center$}
+\fancyfoot[R]{\small\color{textgray}$if(footer-right)$$footer-right$$else$\thepage$endif$}
 
 \hypersetup{colorlinks=true, linkcolor=accent, urlcolor=accent}
 
