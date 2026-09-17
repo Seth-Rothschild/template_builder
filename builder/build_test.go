@@ -232,3 +232,39 @@ func TestBuild(t *testing.T) {
 
 	assertEqual(t, "minimal.pdf", filepath.Base(pdfPath))
 }
+
+func BenchmarkPandoc(b *testing.B) {
+	benchmarkMdPaths := []string{
+		"testdata/minimal.md",
+		"testdata/slick-template.md",
+	}
+	for _, path := range benchmarkMdPaths {
+		b.Run(path, func(b *testing.B) {
+			for b.Loop() {
+				_, err := runPandoc(path)
+				if err != nil {
+					b.Fatal(err)
+				}
+			}
+			b.ReportMetric(b.Elapsed().Seconds()/float64(b.N), "s/op")
+		})
+	}
+}
+
+func BenchmarkBuild(b *testing.B) {
+
+	benchmarkMdPaths := []string{
+		"testdata/minimal.md",
+		"testdata/slick-template.md",
+	}
+	for _, mdPath := range benchmarkMdPaths {
+		b.Run(mdPath, func(b *testing.B) {
+			for b.Loop() {
+				if _, err := Build(mdPath); err != nil {
+					b.Fatal(err)
+				}
+			}
+			b.ReportMetric(b.Elapsed().Seconds()/float64(b.N), "s/op")
+		})
+	}
+}
