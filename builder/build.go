@@ -89,7 +89,11 @@ func runPandoc(path string) (string, error) {
 }
 
 func runTectonic(texPath string, outDir string) (string, error) {
-	_, stderr, err := RunCommand("tectonic", texPath, "--outdir", outDir)
+	args := []string{}
+	args = append(args, texPath)
+	args = append(args, "--outdir", outDir)
+	args = append(args, "-Z", "search-path=templates")
+	_, stderr, err := RunCommand("tectonic", args...)
 	if err != nil && stderr == "" {
 		return "", fmt.Errorf("could not run tectonic: %w", err)
 	}
