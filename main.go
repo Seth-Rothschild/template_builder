@@ -64,21 +64,18 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(pdf)
 }
 
-func oneshot(mdPath string) {
-	pdfPath, err := builder.Build(mdPath)
-	if err != nil {
-		log.Fatal(err)
-	}
-	log.Println("wrote " + pdfPath)
-}
-
 func main() {
 	if err := builder.CheckSetup(); err != nil {
 		log.Fatal(err)
 	}
 
-	if len(os.Args) > 1 {
-		oneshot(os.Args[1])
+	calledAsCommand := len(os.Args) > 1
+	if calledAsCommand {
+		pdfPath, err := builder.Build(os.Args[1])
+		if err != nil {
+			log.Fatal(err)
+		}
+		log.Println("wrote " + pdfPath)
 		return
 	}
 

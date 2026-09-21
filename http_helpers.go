@@ -5,23 +5,26 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime"
 	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func getRequestType(r *http.Request) string {
 	contentType := r.Header.Get("Content-Type")
-	mediaType, _, _ := strings.Cut(contentType, ";")
-	return strings.TrimSpace(mediaType)
+	mediaType, _, err := mime.ParseMediaType(contentType)
+	if err != nil {
+		return ""
+	}
+	return mediaType
 }
 
 func writeMarkdown(dir string, markdown string) (string, error) {
 	mdPath := filepath.Join(dir, "input.md")
 	if err := os.WriteFile(mdPath, []byte(markdown), 0644); err != nil {
-		return "", err
+		return "", fmt.Errorf("writing markdown: %w", err)
 	}
 	return mdPath, nil
 }
@@ -29,31 +32,37 @@ func writeMarkdown(dir string, markdown string) (string, error) {
 func writeMultipartImage(dir string, header *multipart.FileHeader) error {
 	image, err := header.Open()
 	if err != nil {
-		return err
+		return fmt.Errorf("opening image %q: %w", header.Filename, err)
 	}
 	defer image.Close()
 
 	content, err := io.ReadAll(image)
 	if err != nil {
-		return err
+		return fmt.Errorf("reading image %q: %w", header.Filename, err)
 	}
 
 	imagePath := filepath.Join(dir, header.Filename)
-	return os.WriteFile(imagePath, content, 0644)
+	if err := os.WriteFile(imagePath, content, 0644); err != nil {
+		return fmt.Errorf("writing image %q: %w", header.Filename, err)
+	}
+	return nil
 }
 
 func writeBase64Image(dir string, filename string, data string) error {
 	content, err := base64.StdEncoding.DecodeString(data)
 	if err != nil {
-		return fmt.Errorf("image %q: %w", filename, err)
+		return fmt.Errorf("decoding image %q: %w", filename, err)
 	}
 	imagePath := filepath.Join(dir, filename)
-	return os.WriteFile(imagePath, content, 0644)
+	if err := os.WriteFile(imagePath, content, 0644); err != nil {
+		return fmt.Errorf("writing image %q: %w", filename, err)
+	}
+	return nil
 }
 
 func parseMultipart(r *http.Request, dir string) (string, error) {
 	if err := r.ParseMultipartForm(32 << 20); err != nil {
-		return "", err
+		return "", fmt.Errorf("parsing multipart form: %w", err)
 	}
 
 	markdown := r.FormValue("markdown")
@@ -80,7 +89,7 @@ func parseJSON(r *http.Request, dir string) (string, error) {
 		} `json:"images"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-		return "", err
+		return "", fmt.Errorf("decoding json body: %w", err)
 	}
 
 	mdPath, err := writeMarkdown(dir, body.Markdown)
@@ -101,7 +110,7 @@ func parseJSON(r *http.Request, dir string) (string, error) {
 func parsePlainMarkdown(r *http.Request, dir string) (string, error) {
 	markdown, err := io.ReadAll(r.Body)
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("reading request body: %w", err)
 	}
 	return writeMarkdown(dir, string(markdown))
 }
