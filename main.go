@@ -27,7 +27,7 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer os.RemoveAll(tempDir)
 
-	mdPath, err := ParseRequest(r, tempDir)
+	mdPath, err := parseRequest(r, tempDir)
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return

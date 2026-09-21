@@ -106,7 +106,7 @@ func parsePlainMarkdown(r *http.Request, dir string) (string, error) {
 	return writeMarkdown(dir, string(markdown))
 }
 
-func ParseRequest(r *http.Request, dir string) (string, error) {
+func parseRequest(r *http.Request, dir string) (string, error) {
 	switch getRequestType(r) {
 	case "multipart/form-data":
 		return parseMultipart(r, dir)
