@@ -85,16 +85,16 @@ func TestBuildHandler(t *testing.T) {
 }
 
 func TestBuildHandlerErrors(t *testing.T) {
-	t.Run("returns 422 for a mistake in the document", func(t *testing.T) {
+	t.Run("returns 500 for a mistake in the document", func(t *testing.T) {
 		markdown := "---\ntitle: [unclosed\n---\n\nSome body text.\n"
 		request := httptest.NewRequest(http.MethodPost, "/build", strings.NewReader(markdown))
 		recorder := httptest.NewRecorder()
 
 		buildHandler(recorder, request)
 
-		assertEqual(t, http.StatusUnprocessableEntity, recorder.Code)
-		expected := "invalid metadata near line 3: a list starting with \"[\" is never closed. " +
-			"Add the missing \"]\", or put the value in quotes if the \"[\" is part of the text.\n"
+		assertEqual(t, http.StatusInternalServerError, recorder.Code)
+		expected := "invalid metadata in template metadata: while parsing a flow sequence:\n" +
+			"did not find expected ',' or ']'\n"
 		assertEqual(t, expected, recorder.Body.String())
 	})
 

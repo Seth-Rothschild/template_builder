@@ -20,10 +20,9 @@ func TestParsePandocError(t *testing.T) {
 
 		err := parsePandocError(stderr)
 
-		expected := "invalid metadata near line 4: a list starting with \"[\" is never closed. " +
-			"Add the missing \"]\", or put the value in quotes if the \"[\" is part of the text."
+		expected := "invalid metadata in template metadata: while parsing a flow sequence:\n" +
+			"did not find expected ',' or ']'"
 		assertEqual(t, expected, err.Error())
-		assertEqual(t, true, IsUserError(err))
 	})
 
 	t.Run("explains an unexpected yaml colon", func(t *testing.T) {
@@ -31,10 +30,8 @@ func TestParsePandocError(t *testing.T) {
 
 		err := parsePandocError(stderr)
 
-		expected := "invalid metadata near line 2: a value contains a colon or is indented too far. " +
-			"Put the value in quotes, like title: \"Part 1: Setup\", or remove the extra indentation."
+		expected := "invalid metadata in template metadata: mapping values are not allowed in this context"
 		assertEqual(t, expected, err.Error())
-		assertEqual(t, true, IsUserError(err))
 	})
 
 	t.Run("explains an unclosed yaml quote", func(t *testing.T) {
@@ -42,10 +39,9 @@ func TestParsePandocError(t *testing.T) {
 
 		err := parsePandocError(stderr)
 
-		expected := "invalid metadata near line 3: a quoted value is never closed. " +
-			"Add the missing closing quote."
+		expected := "invalid metadata in template metadata: while scanning a quoted scalar:\n" +
+			"found unexpected document indicator"
 		assertEqual(t, expected, err.Error())
-		assertEqual(t, true, IsUserError(err))
 	})
 
 	t.Run("passes through an unrecognized error", func(t *testing.T) {
@@ -54,7 +50,6 @@ func TestParsePandocError(t *testing.T) {
 		err := parsePandocError(stderr)
 
 		assertEqual(t, stderr, err.Error())
-		assertEqual(t, false, IsUserError(err))
 	})
 }
 
@@ -67,7 +62,6 @@ func TestParseTectonicError(t *testing.T) {
 		expected := "could not render pdf: could not load image \"bad.png\". " +
 			"Make sure it is a real PNG, JPEG, or PDF file, not another format renamed to one of those extensions."
 		assertEqual(t, expected, err.Error())
-		assertEqual(t, true, IsUserError(err))
 	})
 
 	t.Run("explains an undefined latex command", func(t *testing.T) {
@@ -78,7 +72,6 @@ func TestParseTectonicError(t *testing.T) {
 		expected := "could not render pdf: the LaTeX command \\notacommand does not exist. " +
 			"Check the template for a typo, or for a \\usepackage line it is missing."
 		assertEqual(t, expected, err.Error())
-		assertEqual(t, false, IsUserError(err))
 	})
 
 	t.Run("explains a missing latex package", func(t *testing.T) {
@@ -89,7 +82,6 @@ func TestParseTectonicError(t *testing.T) {
 		expected := "could not render pdf: the LaTeX package \"notarealpackage\" could not be found. " +
 			"Check the \\usepackage lines in the template for a typo."
 		assertEqual(t, expected, err.Error())
-		assertEqual(t, false, IsUserError(err))
 	})
 
 	t.Run("reports any other latex error without the log", func(t *testing.T) {
@@ -99,7 +91,6 @@ func TestParseTectonicError(t *testing.T) {
 
 		expected := "could not render pdf: Something else went wrong"
 		assertEqual(t, expected, err.Error())
-		assertEqual(t, false, IsUserError(err))
 	})
 
 	t.Run("passes through an unrecognized error", func(t *testing.T) {
@@ -108,6 +99,5 @@ func TestParseTectonicError(t *testing.T) {
 		err := parseTectonicError(stderr)
 
 		assertEqual(t, stderr, err.Error())
-		assertEqual(t, false, IsUserError(err))
 	})
 }

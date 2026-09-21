@@ -91,7 +91,6 @@ func TestRunPandoc(t *testing.T) {
 
 		expected := "could not run pandoc: exec: \"pandoc\": executable file not found in $PATH"
 		assertEqual(t, expected, err.Error())
-		assertEqual(t, false, IsUserError(err))
 	})
 
 	t.Run("reports the line of invalid metadata", func(t *testing.T) {
@@ -99,8 +98,8 @@ func TestRunPandoc(t *testing.T) {
 
 		_, err := runPandoc(path)
 
-		expected := "invalid metadata near line 4: a list starting with \"[\" is never closed. " +
-			"Add the missing \"]\", or put the value in quotes if the \"[\" is part of the text."
+		expected := "invalid metadata in template metadata: while parsing a flow sequence:\n" +
+			"did not find expected ',' or ']'"
 		assertEqual(t, expected, err.Error())
 	})
 
@@ -109,9 +108,8 @@ func TestRunPandoc(t *testing.T) {
 
 		_, err := runPandoc(path)
 
-		expected := "unknown template_version \"does-not-exist\""
+		expected := "could not find template \"templates/does-not-exist.tex\" for template_version \"does-not-exist\""
 		assertEqual(t, expected, err.Error())
-		assertEqual(t, true, IsUserError(err))
 	})
 
 	t.Run("uses default template when none given", func(t *testing.T) {

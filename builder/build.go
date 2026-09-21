@@ -66,7 +66,7 @@ func runPandoc(path string) (string, error) {
 		template = filepath.Join("templates", version+".tex")
 	}
 	if _, err := os.Stat(template); err != nil {
-		return "", userError("unknown template_version %q", version)
+		return "", fmt.Errorf("could not find template %q for template_version %q", template, version)
 	}
 
 	args := []string{}
