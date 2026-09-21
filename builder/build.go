@@ -8,26 +8,28 @@ import (
 )
 
 func preamble() string {
-	lines := []string{}
-	lines = append(lines, "\\usepackage{graphicx}")
-	lines = append(lines, "\\usepackage{float}")
-	lines = append(lines, "\\usepackage{tabularray}")
-	lines = append(lines, "\\usepackage{xcolor}")
-	lines = append(lines, "\\usepackage{soul}")
-	lines = append(lines, "\\usepackage{fvextra}")
-	lines = append(lines, "\\usepackage{hyperref}")
-	lines = append(lines, "\\fvset{breaklines=true, breakanywhere=true}")
-	lines = append(lines, "\\setlength{\\emergencystretch}{3em}")
-	lines = append(lines, "\\providecommand{\\tightlist}{%\n  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}")
-	lines = append(lines, "\\providecommand{\\pandocbounded}[1]{#1}")
-	lines = append(lines, "\\providecolor{accent}{HTML}{2C6E91}")
+	lines := []string{
+		"\\usepackage{graphicx}",
+		"\\usepackage{float}",
+		"\\usepackage{tabularray}",
+		"\\usepackage{xcolor}",
+		"\\usepackage{soul}",
+		"\\usepackage{fvextra}",
+		"\\usepackage{hyperref}",
+		"\\fvset{breaklines=true, breakanywhere=true}",
+		"\\setlength{\\emergencystretch}{3em}",
+		"\\providecommand{\\tightlist}{%\n  \\setlength{\\itemsep}{0pt}\\setlength{\\parskip}{0pt}}",
+		"\\providecommand{\\pandocbounded}[1]{#1}",
+		"\\providecolor{accent}{HTML}{2C6E91}",
+	}
 	return strings.Join(lines, "\n") + "\n"
 }
 
 func inputFormat() string {
-	extensions := []string{}
-	extensions = append(extensions, "+lists_without_preceding_blankline")
-	extensions = append(extensions, "+gfm_auto_identifiers")
+	extensions := []string{
+		"+lists_without_preceding_blankline",
+		"+gfm_auto_identifiers",
+	}
 	return "markdown" + strings.Join(extensions, "")
 }
 
@@ -69,14 +71,15 @@ func runPandoc(path string) (string, error) {
 		return "", fmt.Errorf("could not find template %q for template_version %q", template, version)
 	}
 
-	args := []string{}
-	args = append(args, "-f", inputFormat())
-	args = append(args, "-t", "latex")
-	args = append(args, "--template", template)
-	args = append(args, "--lua-filter", "filters/tables.lua")
-	args = append(args, "--lua-filter", "filters/images.lua")
-	args = append(args, "-V", "header-includes="+preamble())
-	args = append(args, path)
+	args := []string{
+		"-f", inputFormat(),
+		"-t", "latex",
+		"--template", template,
+		"--lua-filter", "filters/tables.lua",
+		"--lua-filter", "filters/images.lua",
+		"-V", "header-includes=" + preamble(),
+		path,
+	}
 
 	latex, stderr, err := RunCommand("pandoc", args...)
 	if err != nil && stderr == "" {
@@ -89,10 +92,11 @@ func runPandoc(path string) (string, error) {
 }
 
 func runTectonic(texPath string, outDir string) (string, error) {
-	args := []string{}
-	args = append(args, texPath)
-	args = append(args, "--outdir", outDir)
-	args = append(args, "-Z", "search-path=templates")
+	args := []string{
+		texPath,
+		"--outdir", outDir,
+		"-Z", "search-path=templates",
+	}
 	_, stderr, err := RunCommand("tectonic", args...)
 	if err != nil && stderr == "" {
 		return "", fmt.Errorf("could not run tectonic: %w", err)
