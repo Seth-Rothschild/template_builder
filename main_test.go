@@ -4,8 +4,11 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 func assertEqual(t *testing.T, expected, actual interface{}) {
@@ -95,6 +98,26 @@ func TestBuildHandlerErrors(t *testing.T) {
 		assertEqual(t, expected, recorder.Body.String())
 	})
 
+	t.Run("returns 500 when a temp directory cannot be created", func(t *testing.T) {
+		t.Setenv("TMPDIR", filepath.Join(t.TempDir(), "missing"))
+		markdown := "# Heading\n"
+		request := httptest.NewRequest(http.MethodPost, "/build", strings.NewReader(markdown))
+		recorder := httptest.NewRecorder()
+
+		buildHandler(recorder, request)
+
+		assertEqual(t, http.StatusInternalServerError, recorder.Code)
+	})
+
+	t.Run("returns 400 when the request cannot be parsed", func(t *testing.T) {
+		request := httptest.NewRequest(http.MethodPost, "/build", errReader{})
+		recorder := httptest.NewRecorder()
+
+		buildHandler(recorder, request)
+
+		assertEqual(t, http.StatusBadRequest, recorder.Code)
+	})
+
 	t.Run("returns 500 when the server cannot build", func(t *testing.T) {
 		t.Setenv("PATH", "")
 		markdown := "# Heading\n"
@@ -106,5 +129,36 @@ func TestBuildHandlerErrors(t *testing.T) {
 		assertEqual(t, http.StatusInternalServerError, recorder.Code)
 		expected := "could not run pandoc: exec: \"pandoc\": executable file not found in $PATH\n"
 		assertEqual(t, expected, recorder.Body.String())
+	})
+}
+
+func TestNewServer(t *testing.T) {
+	t.Run("uses the configured port and timeout", func(t *testing.T) {
+		t.Setenv("PORT", "9090")
+		t.Setenv("TIMEOUT", "45")
+
+		server := newServer()
+
+		assertEqual(t, ":9090", server.Addr)
+		expectedTimeout := 45 * time.Second
+		assertEqual(t, expectedTimeout, server.ReadTimeout)
+		assertEqual(t, expectedTimeout, server.WriteTimeout)
+		assertEqual(t, expectedTimeout, server.ReadHeaderTimeout)
+		assertEqual(t, expectedTimeout, server.IdleTimeout)
+	})
+
+	t.Run("registers the health and build handlers", func(t *testing.T) {
+		server := newServer()
+		mux := server.Handler.(*http.ServeMux)
+
+		healthRequest := httptest.NewRequest(http.MethodGet, "/health", nil)
+		registeredHealthHandler, healthPattern := mux.Handler(healthRequest)
+		assertEqual(t, "/health", healthPattern)
+		assertEqual(t, reflect.ValueOf(healthHandler).Pointer(), reflect.ValueOf(registeredHealthHandler).Pointer())
+
+		buildRequest := httptest.NewRequest(http.MethodPost, "/build", nil)
+		registeredBuildHandler, buildPattern := mux.Handler(buildRequest)
+		assertEqual(t, "/build", buildPattern)
+		assertEqual(t, reflect.ValueOf(buildHandler).Pointer(), reflect.ValueOf(registeredBuildHandler).Pointer())
 	})
 }

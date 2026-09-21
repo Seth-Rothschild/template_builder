@@ -64,6 +64,23 @@ func buildHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write(pdf)
 }
 
+func newServer() *http.Server {
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/build", buildHandler)
+
+	requestTimeout := time.Duration(timeout()) * time.Second
+
+	return &http.Server{
+		Addr:              ":" + port(),
+		Handler:           mux,
+		ReadTimeout:       requestTimeout,
+		WriteTimeout:      requestTimeout,
+		ReadHeaderTimeout: requestTimeout,
+		IdleTimeout:       requestTimeout,
+	}
+}
+
 func main() {
 	if err := builder.CheckSetup(); err != nil {
 		log.Fatal(err)
@@ -79,21 +96,7 @@ func main() {
 		return
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("/health", healthHandler)
-	mux.HandleFunc("/build", buildHandler)
-	addr := ":" + port()
-	timeout := time.Duration(timeout()) * time.Second
-
-	server := &http.Server{
-		Addr:              addr,
-		Handler:           mux,
-		ReadTimeout:       timeout,
-		WriteTimeout:      timeout,
-		ReadHeaderTimeout: timeout,
-		IdleTimeout:       timeout,
-	}
-
-	log.Println("listening on " + addr)
+	server := newServer()
+	log.Println("listening on " + server.Addr)
 	log.Fatal(server.ListenAndServe())
 }
