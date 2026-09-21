@@ -3,7 +3,9 @@ package builder
 import (
 	"context"
 	"errors"
+	"fmt"
 	"os"
+	"strings"
 	"testing"
 	"time"
 )
@@ -36,6 +38,27 @@ func TestCheckSetup(t *testing.T) {
 			"setup problem: filters/images.lua not found in " + workingDir + ", run template_builder from the repository root"
 		assertEqual(t, expected, err.Error())
 	})
+}
+
+func ExampleCheckSetup() {
+	if err := CheckSetup(); err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println("ready")
+	// Output:
+	// ready
+}
+
+func ExampleRunCommand() {
+	stdout, _, err := RunCommand("pandoc", "--version")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(strings.HasPrefix(stdout, "pandoc"))
+	// Output:
+	// true
 }
 
 func TestRunCommandTimeout(t *testing.T) {

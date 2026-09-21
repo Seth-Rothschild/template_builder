@@ -1,3 +1,12 @@
+// Command template_builder renders Markdown into a PDF using Pandoc and
+// Tectonic.
+//
+// Run with a Markdown file path as an argument to build it once and exit:
+//
+//	template_builder input.md
+//
+// Run with no arguments to start an HTTP server instead. The README
+// documents its endpoints and the request formats they accept.
 package main
 
 import (
@@ -7,7 +16,7 @@ import (
 	"strconv"
 	"time"
 
-	"template_builder/builder"
+	"github.com/Seth-Rothschild/template_builder/builder"
 )
 
 func port() string {

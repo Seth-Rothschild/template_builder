@@ -19,6 +19,9 @@ coverage:
 	go test -coverprofile=coverage.out ./...
 	go tool cover -html=coverage.out
 
+docs:
+	go doc -http
+
 build:
 	go build -o bin/template_builder .
 

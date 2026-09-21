@@ -1,3 +1,4 @@
+// Package builder drives Pandoc and Tectonic to turn a Markdown file into a PDF.
 package builder
 
 import (
@@ -11,6 +12,8 @@ func preamble() string {
 	lines := []string{
 		"\\usepackage{graphicx}",
 		"\\usepackage{float}",
+		"\\usepackage{tikz}",
+		"\\usetikzlibrary{arrows.meta, positioning, calc, shapes.geometric}",
 		"\\usepackage{tabularray}",
 		"\\usepackage{xcolor}",
 		"\\usepackage{soul}",
@@ -110,6 +113,8 @@ func runTectonic(texPath string, outDir string) (string, error) {
 	return filepath.Join(outDir, pdfName), nil
 }
 
+// Build renders the Markdown file at mdPath into a PDF using Pandoc and
+// Tectonic, and returns the path to the generated PDF.
 func Build(mdPath string) (string, error) {
 	latex, err := runPandoc(mdPath)
 	if err != nil {

@@ -1,6 +1,7 @@
 package builder
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
@@ -40,6 +41,8 @@ func assertNoError(t *testing.T, err error) {
 func TestPreambleDeclaresRequiredPackages(t *testing.T) {
 	expected := "\\usepackage{graphicx}\n" +
 		"\\usepackage{float}\n" +
+		"\\usepackage{tikz}\n" +
+		"\\usetikzlibrary{arrows.meta, positioning, calc, shapes.geometric}\n" +
 		"\\usepackage{tabularray}\n" +
 		"\\usepackage{xcolor}\n" +
 		"\\usepackage{soul}\n" +
@@ -234,6 +237,30 @@ func TestBuild(t *testing.T) {
 	}
 
 	assertEqual(t, "minimal.pdf", filepath.Base(pdfPath))
+}
+
+func ExampleBuild() {
+	dir, err := os.MkdirTemp("", "example")
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	defer os.RemoveAll(dir)
+
+	mdPath := filepath.Join(dir, "minimal.md")
+	if err := copyFile("testdata/minimal.md", mdPath); err != nil {
+		fmt.Println(err)
+		return
+	}
+
+	pdfPath, err := Build(mdPath)
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	fmt.Println(filepath.Base(pdfPath))
+	// Output:
+	// minimal.pdf
 }
 
 func BenchmarkPandoc(b *testing.B) {
