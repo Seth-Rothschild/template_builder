@@ -45,6 +45,26 @@ func TestPort(t *testing.T) {
 	})
 }
 
+func TestTimeout(t *testing.T) {
+	t.Run("defaults when env var not set", func(t *testing.T) {
+		os.Unsetenv("TIMEOUT")
+
+		expected := 60
+		actual := timeout()
+		assertEqual(t, expected, actual)
+	})
+
+	t.Run("uses env var when set", func(t *testing.T) {
+		os.Setenv("TIMEOUT", "45")
+		defer os.Unsetenv("TIMEOUT")
+
+		expected := 45
+		actual := timeout()
+
+		assertEqual(t, expected, actual)
+	})
+}
+
 func TestBuildHandler(t *testing.T) {
 	markdown := "# Heading\n"
 	request := httptest.NewRequest(http.MethodPost, "/build", strings.NewReader(markdown))

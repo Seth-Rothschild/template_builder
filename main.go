@@ -4,6 +4,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"strconv"
+	"time"
 
 	"template_builder/builder"
 )
@@ -13,6 +15,15 @@ func port() string {
 		return envPort
 	}
 	return "8080"
+}
+
+func timeout() int {
+	if envTimeout := os.Getenv("TIMEOUT"); envTimeout != "" {
+		if t, err := strconv.Atoi(envTimeout); err == nil {
+			return t
+		}
+	}
+	return 60
 }
 
 func healthHandler(w http.ResponseWriter, r *http.Request) {
@@ -71,9 +82,21 @@ func main() {
 		return
 	}
 
-	http.HandleFunc("/health", healthHandler)
-	http.HandleFunc("/build", buildHandler)
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", healthHandler)
+	mux.HandleFunc("/build", buildHandler)
 	addr := ":" + port()
+	timeout := time.Duration(timeout()) * time.Second
+
+	server := &http.Server{
+		Addr:              addr,
+		Handler:           mux,
+		ReadTimeout:       timeout,
+		WriteTimeout:      timeout,
+		ReadHeaderTimeout: timeout,
+		IdleTimeout:       timeout,
+	}
+
 	log.Println("listening on " + addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+	log.Fatal(server.ListenAndServe())
 }
